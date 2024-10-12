@@ -176,6 +176,22 @@ attempting the bonus deliverables!**
    details with the new movie's details. Note that you may have to make an
    additional GET request to access the movie's details.
 
+# Flatadango
+
+Flatadango is a web app that allows users to purchase movie tickets from the Flatiron Movie Theater.
+
+## Features:
+- View movie details (poster, title, runtime, showtime, and available tickets).
+- Purchase tickets and update the server with the new number of available tickets.
+- View a menu of all movies available.
+- Delete a movie from the list.
+
+## Deployment:
+You can view the live app [here] 
+.
+
+## License:
+This project is licensed under the MIT License.
 
 
 
