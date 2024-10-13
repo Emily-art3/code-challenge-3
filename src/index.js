@@ -8,6 +8,7 @@ function displayMovieDetails(movie) {
     const runtime = document.getElementById('runtime');
     const showtime = document.getElementById('showtime');
     const availableTickets = document.getElementById('availableTickets');
+    const buyButton = document.getElementById('buy-ticket');
 
     poster.src = movie.poster;
     title.textContent = movie.title;
@@ -16,6 +17,8 @@ function displayMovieDetails(movie) {
 
     const ticketAvailable = movie.capacity - movie.tickets_sold;
     availableTickets.textContent = `Available Tickets: ${ticketAvailable}`;
+
+    buyButton.setAttribute('data-movie-id', movie.id);
 }
 
 //function to fetch the first movie's details
@@ -23,11 +26,14 @@ function getFirstMovie() {
     fetch(`${baseURL}/1`)
     .then(response => response.json())
     .then(movie => displayMovieDetails(movie))
-    .catch(error => console.log("error fetching movie:", error));
+    .catch(error => console.log("Error fetching movie:", error));
 }
 
 //load the first movie's details when the page loads
-window.addEventListener('DOMContentLoaded', getFirstMovie);
+window.addEventListener('DOMContentLoaded', () => {
+    getFirstMovie();
+    getAllMovies();
+});
 
 //function to render movie list 
 function renderMovieList(movies) {
@@ -39,7 +45,18 @@ movies.forEach(movie => {
     filmItem.textContent = movie.title;
     filmItem.classList.add('film', 'item');
     filmItem.addEventListener('click', () => displayMovieDetails(movie));
-    filmList.appendChild(filmItem);
+
+    //Add delete button
+const deleteButton = document.createElement('button');
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener('click', (e) => {
+    e.stopImmediatePropagation();
+    deleteMovie(movie.id);
+    filmItem.remove(); //remove from the list
+});
+     filmItem.appendChild(deleteButton);
+     filmList.appendChild(filmItem);
+
 });
 }
 
@@ -51,17 +68,19 @@ function getAllMovies() {
     .catch(error => console.log("Error fetching movies", error));
 }
 
-//loads movie list when the page loads
-window.addEventListener('DOMContentLoaded', getAllMovies);
-
 //function for ticket purchase
-function buyTicket(movie) {
-    const ticketsAvailable = movie.capacity - movie.ticket_sold;
-    if (ticketsAvailable > 0) {
-        movie.tickets_sold += 1;
-        const updatedTicketsAvailable = movie.capacity - movie.ticket_sold;
-        document.getElementById('available-tickets').textContent = `Available Tickets: ${updateTicketAvailable}`;
-    }
+function buyTicket(movieId) {
+    fetch(`${baseURL}/${movieId}`)
+     .then(response => response.json())
+     .then(movie => {
+        const ticketsAvailable = movie.capacity - movie.tickets_sold;
+
+        if (ticketsAvailable > 0) {
+            movie.tickets_sold += 1;
+            const updatedTicketsAvailable = movie.capacity - movie.tickets_sold;
+
+            //Updates available tickets in the UI
+            document.getElementById('availableTickets').textContent = `Available Tickets: ${updatedTicketsAvailable}`;
 
     //update the server with the new tickets_sold
     fetch(`${baseURL}/${movie.id}`, {
@@ -69,7 +88,7 @@ function buyTicket(movie) {
         headers: {
             "Content-Type": "application/json"
         },
-        body:JSON.stringify({
+        body: JSON.stringify({
             tickets_sold: movie.tickets_sold
         })
     })
@@ -79,31 +98,19 @@ function buyTicket(movie) {
     //change button text if sold out
     if (updatedTicketsAvailable === 0) {
       document.getElementById('buy-ticket').textContent = "Sold Out";  
-    } else {
-    document.getElementById('buy-ticket'). textContent = "Sold Out" 
-  }
+       }  
+    }
+}) 
+.catch(error => console.log('Error fetching movie', error)); 
 }
-//Event listener for the buy TIcket button
-document.getElementById('buy-ticket').addEventListener('click', () => {
-    const title = document.getElementById('title').textContent;
-    fetch(`${baseURL}?title=${title}`)
-    .then(response => response.json())
-    .then(movies => {
-        if (movies.length > 0) {
-            buyTicket(movies[0]);
+
+//Event listener for the buy ticket button
+document.getElementById('buy-ticket').addEventListener('click', (event) => {
+    const movieId = event.target.getAttribute('data-movie-id');
+    if (movieId) {
+        buyTicket(movieId);
         }
-    })
-    .catch(error => console.log("Error fetching movie for ticket purchse:", error));
-})
-//Add delete button
-const deleteButton = document.createElement('buttton');
-deleteButton.textContent = "Delete";
-deleteButton.addEventListener('click', (e) => {
-    e.stopImmediatePropagation();
-    deleteMovie(movie.id);
-    filmItem.remove(); //remove from the list
-});
-filmItem.appendChild(deleteButton);
+    });
 
 //function to delete movie from server
 function deleteMovie(id){
