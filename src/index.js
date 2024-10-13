@@ -7,18 +7,20 @@ function displayMovieDetails(movie) {
     const title = document.getElementById('title');
     const runtime = document.getElementById('runtime');
     const showtime = document.getElementById('showtime');
-    const availableTickets = document.getElementById('availableTickets');
+    const availableTickets = document.getElementById('ticket-num');
     const buyButton = document.getElementById('buy-ticket');
 
     poster.src = movie.poster;
-    title.textContent = movie.title;
+    title.textContent = movie.title || "assets/placeholderImage.png";
+    title.textContent = movie.title || "[MOVIE TITLE]";
     runtime.textContent = `Runtime: ${movie.runtime} minutes`;
-    showtime.textContent = `Showtime ${movie.showtime}`;
+    showtime.textContent = `Showtime ${movie.showtime || "SHOWTIME"}`;
 
     const ticketAvailable = movie.capacity - movie.tickets_sold;
-    availableTickets.textContent = `Available Tickets: ${ticketAvailable}`;
+    availableTickets.textContent = ticketAvailable > 0 ? ticketAvailable : 0;
 
     buyButton.setAttribute('data-movie-id', movie.id);
+    buyButton.textContent = ticketAvailable > 0 ? "Buy Ticket" : "Sold Out"
 }
 
 //function to fetch the first movie's details
