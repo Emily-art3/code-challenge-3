@@ -1,29 +1,57 @@
 // The base URL
 const baseURL = "http://localhost:3000/films";
 
-// Function to display movie details with batched DOM updates
+// Global variable to store fetched movies
+let movies = [];
+
+// Function to display movie details
 function displayMovieDetails(movie) {
-    const movieHTML = `
-        <img id="poster" src="${movie.poster}" alt="Movie Poster" />
-        <h1 id="title">${movie.title || "[MOVIE TITLE]"}</h1>
-        <p id="runtime">Runtime: ${movie.runtime} minutes</p>
-        <p id="showtime">Showtime: ${movie.showtime || "SHOWTIME"}</p>
-        <p id="ticket-num">Available Tickets: ${movie.capacity - movie.tickets_sold > 0 ? movie.capacity - movie.tickets_sold : 0}</p>
-    `;
+    // Update movie poster
+    const posterElement = document.getElementById('poster');
+    if (posterElement) {
+        posterElement.src = movie.poster;
+        posterElement.alt = movie.title || "[MOVIE TITLE]";
+    }
 
-    document.getElementById('movie-details').innerHTML = movieHTML;
+    // Update movie title
+    const titleElement = document.getElementById('title');
+    if (titleElement) {
+        titleElement.textContent = movie.title || "[MOVIE TITLE]";
+    }
 
-    // Update the buy ticket button
+    // Update movie runtime
+    const runtimeElement = document.getElementById('runtime');
+    if (runtimeElement) {
+        runtimeElement.textContent = `Runtime: ${movie.runtime || "[RUNTIME]"} minutes`;
+    }
+
+    // Update movie showtime
+    const showtimeElement = document.getElementById('showtime');
+    if (showtimeElement) {
+        showtimeElement.textContent = movie.showtime || "[SHOWTIME]";
+    }
+
+    // Update available tickets
+    const ticketsElement = document.getElementById('ticket-num');
+    if (ticketsElement) {
+        const availableTickets = movie.capacity - movie.tickets_sold;
+        ticketsElement.textContent = `Available Tickets: ${availableTickets > 0 ? availableTickets : 0}`;
+    }
+
+    // Update buy ticket button
     const buyButton = document.getElementById('buy-ticket');
-    buyButton.setAttribute('data-movie-id', movie.id);
-    buyButton.textContent = movie.capacity - movie.tickets_sold > 0 ? "Buy Ticket" : "Sold Out";
+    if (buyButton) {
+        buyButton.setAttribute('data-movie-id', movie.id);
+        buyButton.textContent = movie.capacity - movie.tickets_sold > 0 ? "Buy Ticket" : "Sold Out";
+    }
 }
 
 // Function to fetch all movies and render the list
 function getAllMovies() {
     fetch(baseURL)
         .then(response => response.json())
-        .then(movies => {
+        .then(fetchedMovies => {
+            movies = fetchedMovies; // Store the movies globally
             renderMovieList(movies);
             displayMovieDetails(movies[0]); // Display the first movie's details
         })
@@ -33,13 +61,13 @@ function getAllMovies() {
 // Function to render movie list with event delegation
 function renderMovieList(movies) {
     const filmList = document.getElementById('films');
-    filmList.innerHTML = ''; // Clear any placeholder
+    filmList.innerHTML = ''; // Clear the list
 
     movies.forEach(movie => {
         const filmItem = document.createElement('li');
         filmItem.textContent = movie.title;
         filmItem.classList.add('film', 'item');
-        filmItem.setAttribute('data-movie-id', movie.id); // Store movie ID in the element
+        filmItem.setAttribute('data-movie-id', movie.id);
 
         // Add delete button
         const deleteButton = document.createElement('button');
@@ -73,7 +101,7 @@ function buyTicket(movie) {
         const updatedTicketsAvailable = movie.capacity - movie.tickets_sold;
 
         // Update available tickets in the UI
-        document.getElementById('ticket-num').textContent = updatedTicketsAvailable;
+        document.getElementById('ticket-num').textContent = `Available Tickets: ${updatedTicketsAvailable}`;
 
         // Update the server with the new tickets_sold value
         fetch(`${baseURL}/${movie.id}`, {
@@ -97,11 +125,10 @@ function buyTicket(movie) {
 document.getElementById('buy-ticket').addEventListener('click', (event) => {
     const movieId = event.target.getAttribute('data-movie-id');
     if (movieId) {
-        // Find the movie object from the list (assuming it's already fetched)
-        fetch(`${baseURL}/${movieId}`)
-            .then(response => response.json())
-            .then(movie => buyTicket(movie))
-            .catch(error => console.log('Error fetching movie:', error));
+        const selectedMovie = movies.find(movie => movie.id == movieId);
+        if (selectedMovie) {
+            buyTicket(selectedMovie);
+        }
     }
 });
 
